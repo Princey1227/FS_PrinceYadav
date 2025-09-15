@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Commute Optimizer</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <nav class="nav">
+                <div class="logo">
+                    <i class="fas fa-route"></i>
+                    <span>CommuteShare</span>
+                </div>
+                <ul class="nav-links">
+                    <li><a href="#" class="nav-link active" data-page="home">Home</a></li>
+                    <li><a href="#" class="nav-link" data-page="map">Find Routes</a></li>
+                    <li><a href="#" class="nav-link" data-page="matches">My Matches</a></li>
+                    <li><a href="#" class="nav-link" data-page="messages">Messages</a></li>
+                    <li><a href="#" class="nav-link" data-page="profile">Profile</a></li>
+                </ul>
+                <div class="user-info">
+                    <span class="username" id="currentUsername">SwiftFalcon2847</span>
+                    <button class="btn btn-secondary" onclick="logout()">Logout</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Home Page -->
+        <div id="homePage" class="page active">
+            <div class="container">
+                <div class="hero-section">
+                    <div class="hero-content">
+                        <h1>Share Your Commute,<br>Save Money & Environment</h1>
+                        <p>Connect with fellow students traveling similar routes. Make commuting affordable, social, and eco-friendly.</p>
+                        <div class="hero-buttons">
+                            <button class="btn btn-primary" onclick="showPage('map')">Start Carpooling</button>
+                            <button class="btn btn-secondary" onclick="showPage('matches')">View Matches</button>
+                        </div>
+                    </div>
+                    <div class="hero-image">
+                        <div class="floating-cards">
+                            <div class="card-float card-1">
+                                <i class="fas fa-users"></i>
+                                <span>Safe & Anonymous</span>
+                            </div>
+                            <div class="card-float card-2">
+                                <i class="fas fa-map-marked-alt"></i>
+                                <span>Smart Route Matching</span>
+                            </div>
+                            <div class="card-float card-3">
+                                <i class="fas fa-comments"></i>
+                                <span>In-App Messaging</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="features-section">
+                    <h2>Why Choose CommuteShare?</h2>
+                    <div class="features-grid">
+                        <div class="feature-card">
+                            <i class="fas fa-shield-alt"></i>
+                            <h3>Privacy First</h3>
+                            <p>Anonymous usernames and fuzzy locations protect your privacy while connecting you with the right people.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-route"></i>
+                            <h3>Smart Matching</h3>
+                            <p>Advanced algorithms match you with students traveling similar routes with optimal overlap.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-money-bill-wave"></i>
+                            <h3>Save Money</h3>
+                            <p>Split fuel costs and reduce your daily commute expenses significantly.</p>
+                        </div>
+                        <div class="feature-card">
+                            <i class="fas fa-leaf"></i>
+                            <h3>Eco-Friendly</h3>
+                            <p>Reduce carbon footprint by sharing rides and contributing to a greener environment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Map Page -->
+        <div id="mapPage" class="page">
+            <div class="container">
+                <div class="map-container">
+                    <div class="map-sidebar">
+                        <div class="route-input-section">
+                            <h3><i class="fas fa-map-marker-alt"></i> Plan Your Route</h3>
+                            <div class="input-group">
+                                <label>From (Home)</label>
+                                <input type="text" id="fromInput" placeholder="Enter your starting location">
+                                <button class="location-btn" onclick="getCurrentLocation('from')">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <label>To (Destination)</label>
+                                <input type="text" id="toInput" placeholder="Enter your destination">
+                                <button class="location-btn" onclick="getCurrentLocation('to')">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                            </div>
+                            <div class="input-group">
+                                <label>Departure Time</label>
+                                <input type="time" id="departureTime" value="08:00">
+                            </div>
+                            <button class="btn btn-primary full-width" onclick="findRoute()">
+                                <i class="fas fa-search"></i> Find Route & Matches
+                            </button>
+                        </div>
+
+                        <div class="nearby-students" id="nearbyStudents" style="display: none;">
+                            <h3><i class="fas fa-users"></i> Nearby Students</h3>
+                            <div class="students-list" id="studentsList">
+                                <!-- Dynamic content -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="map-main">
+                        <div id="map" class="map"></div>
+                        <div class="map-controls">
+                            <button class="map-control-btn" onclick="centerMap()">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                            <button class="map-control-btn" onclick="toggleFullscreen()">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matches Page -->
+        <div id="matchesPage" class="page">
+            <div class="container">
+                <div class="page-header">
+                    <h2><i class="fas fa-handshake"></i> Your Route Matches</h2>
+                    <p>Students with similar commute routes</p>
+                </div>
+                <div class="matches-container">
+                    <div class="matches-filters">
+                        <select id="matchFilter">
+                            <option value="all">All Matches</option>
+                            <option value="high">High Overlap (>70%)</option>
+                            <option value="medium">Medium Overlap (40-70%)</option>
+                            <option value="recent">Recent Matches</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="refreshMatches()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="matches-grid" id="matchesGrid">
+                        <!-- Dynamic content -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Messages Page -->
+        <div id="messagesPage" class="page">
+            <div class="container">
+                <div class="messages-container">
+                    <div class="conversations-sidebar">
+                        <div class="conversations-header">
+                            <h3><i class="fas fa-comments"></i> Conversations</h3>
+                        </div>
+                        <div class="conversations-list" id="conversationsList">
+                            <!-- Dynamic content -->
+                        </div>
+                    </div>
+                    <div class="chat-main">
+                        <div class="chat-placeholder" id="chatPlaceholder">
+                            <i class="fas fa-comments"></i>
+                            <h3>Select a conversation to start chatting</h3>
+                            <p>Choose from your route matches to begin messaging</p>
+                        </div>
+                        <div class="chat-container" id="chatContainer" style="display: none;">
+                            <div class="chat-header" id="chatHeader">
+                                <!-- Dynamic content -->
+                            </div>
+                            <div class="messages-area" id="messagesArea">
+                                <!-- Dynamic content -->
+                            </div>
+                            <div class="message-input-area">
+                                <input type="text" id="messageInput" placeholder="Type your message...">
+                                <button class="btn btn-primary" onclick="sendMessage()">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profilePage" class="page">
+            <div class="container">
+                <div class="profile-container">
+                    <div class="profile-header">
+                        <div class="profile-avatar">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                        <div class="profile-info">
+                            <h2 id="profileUsername">SwiftFalcon2847</h2>
+                            <p class="profile-subtitle">Anonymous Student Profile</p>
+                        </div>
+                    </div>
+
+                    <div class="profile-content">
+                        <div class="profile-section">
+                            <h3><i class="fas fa-route"></i> Your Routes</h3>
+                            <div class="routes-list" id="userRoutes">
+                                <!-- Dynamic content -->
+                            </div>
+                            <button class="btn btn-secondary" onclick="showPage('map')">
+                                <i class="fas fa-plus"></i> Add New Route
+                            </button>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3><i class="fas fa-chart-bar"></i> Commute Statistics</h3>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalRides">12</div>
+                                    <div class="stat-label">Total Rides Shared</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="moneySaved">₹2,400</div>
+                                    <div class="stat-label">Money Saved</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="co2Saved">45 kg</div>
+                                    <div class="stat-label">CO₂ Saved</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="activeMatches">7</div>
+                                    <div class="stat-label">Active Matches</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3><i class="fas fa-cog"></i> Settings</h3>
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <span>Location Sharing</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="locationSharing" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <span>Message Notifications</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="messageNotifications" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <span>Route Match Alerts</span>
+                                    <label class="toggle">
+                                        <input type="checkbox" id="matchAlerts" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Student Info Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="studentModalTitle">Student Details</h3>
+                <span class="close" onclick="closeStudentModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="studentModalBody">
+                <!-- Dynamic content -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="chatButton">
+                    <i class="fas fa-comments"></i> Start Chat
+                </button>
+                <button class="btn btn-secondary" onclick="closeStudentModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner"></div>
+        <p>Finding your matches...</p>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

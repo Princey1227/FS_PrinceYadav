@@ -1,0 +1,161 @@
+-- Users Table
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    anonymous_username VARCHAR(50) UNIQUE NOT NULL,
+    phone_hash VARCHAR(255), -- Hashed for privacy
+    is_verified BOOLEAN DEFAULT FALSE,
+    profile_settings JSONB DEFAULT '{}',
+    created_at TIMEST-- Users Table
+CREATE TABLE users (
+    user_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    anonymous_username VARCHAR(50) UNIQUE NOT NULL,
+    phone_hash VARCHAR(255), -- Hashed for privacy
+    is_verified BOOLEAN DEFAULT FALSE,
+    profile_settings JSONB DEFAULT '{}',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Routes Table with PostGIS geometry
+CREATE TABLE routes (
+    route_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    route_name VARCHAR(255),
+    start_location GEOMETRY(Point, 4326) NOT NULL,
+    end_location GEOMETRY(Point, 4326) NOT NULL,
+    route_polyline GEOMETRY(LineString, 4326),
+    fuzzy_start_location GEOMETRY(Point, 4326), -- Privacy: offset by ~200m
+    fuzzy_end_location GEOMETRY(Point, 4326),   -- Privacy: offset by ~200m
+    departure_time TIME NOT NULL,
+    arrival_time TIME,
+    days_of_week INTEGER[], -- [1,2,3,4,5] for Mon-Fri
+    is_active BOOLEAN DEFAULT TRUE,
+    route_distance_meters INTEGER,
+    estimated_duration_minutes INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Spatial indexes for performance
+CREATE INDEX idx_routes_start_location ON routes USING GIST (start_location);
+CREATE INDEX idx_routes_end_location ON routes USING GIST (end_location);
+CREATE INDEX idx_routes_polyline ON routes USING GIST (route_polyline);
+CREATE INDEX idx_routes_fuzzy_start ON routes USING GIST (fuzzy_start_location);
+
+-- Route Matches Table
+CREATE TABLE route_matches (
+    match_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    requester_route_id UUID REFERENCES routes(route_id),
+    matched_route_id UUID REFERENCES routes(route_id),
+    overlap_percentage DECIMAL(5,2),
+    shared_distance_meters INTEGER,
+    time_compatibility_score DECIMAL(3,2),
+    overall_match_score DECIMAL(5,2),
+    status VARCHAR(20) DEFAULT 'pending', -- pending, accepted, rejected
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(requester_route_id, matched_route_id)
+);
+
+-- Messages Table
+CREATE TABLE messages (
+    message_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL,
+    sender_id UUID REFERENCES users(user_id),
+    receiver_id UUID REFERENCES users(user_id),
+    message_content TEXT NOT NULL,
+    message_type VARCHAR(20) DEFAULT 'text',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User Sessions for JWT management
+CREATE TABLE user_sessions (
+    session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    jwt_token_hash VARCHAR(255),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Anonymous Username Pool (pre-generated)
+CREATE TABLE username_pool (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
+    assigned_at TIMESTAMP
+);AMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Routes Table with PostGIS geometry
+CREATE TABLE routes (
+    route_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    route_name VARCHAR(255),
+    start_location GEOMETRY(Point, 4326) NOT NULL,
+    end_location GEOMETRY(Point, 4326) NOT NULL,
+    route_polyline GEOMETRY(LineString, 4326),
+    fuzzy_start_location GEOMETRY(Point, 4326), -- Privacy: offset by ~200m
+    fuzzy_end_location GEOMETRY(Point, 4326),   -- Privacy: offset by ~200m
+    departure_time TIME NOT NULL,
+    arrival_time TIME,
+    days_of_week INTEGER[], -- [1,2,3,4,5] for Mon-Fri
+    is_active BOOLEAN DEFAULT TRUE,
+    route_distance_meters INTEGER,
+    estimated_duration_minutes INTEGER,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Spatial indexes for performance
+CREATE INDEX idx_routes_start_location ON routes USING GIST (start_location);
+CREATE INDEX idx_routes_end_location ON routes USING GIST (end_location);
+CREATE INDEX idx_routes_polyline ON routes USING GIST (route_polyline);
+CREATE INDEX idx_routes_fuzzy_start ON routes USING GIST (fuzzy_start_location);
+
+-- Route Matches Table
+CREATE TABLE route_matches (
+    match_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    requester_route_id UUID REFERENCES routes(route_id),
+    matched_route_id UUID REFERENCES routes(route_id),
+    overlap_percentage DECIMAL(5,2),
+    shared_distance_meters INTEGER,
+    time_compatibility_score DECIMAL(3,2),
+    overall_match_score DECIMAL(5,2),
+    status VARCHAR(20) DEFAULT 'pending', -- pending, accepted, rejected
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    UNIQUE(requester_route_id, matched_route_id)
+);
+
+-- Messages Table
+CREATE TABLE messages (
+    message_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL,
+    sender_id UUID REFERENCES users(user_id),
+    receiver_id UUID REFERENCES users(user_id),
+    message_content TEXT NOT NULL,
+    message_type VARCHAR(20) DEFAULT 'text',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- User Sessions for JWT management
+CREATE TABLE user_sessions (
+    session_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+    jwt_token_hash VARCHAR(255),
+    expires_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Anonymous Username Pool (pre-generated)
+CREATE TABLE username_pool (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    is_used BOOLEAN DEFAULT FALSE,
+    assigned_at TIMESTAMP
+);
